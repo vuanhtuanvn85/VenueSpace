@@ -13,11 +13,32 @@ class QuoteController extends Controller
     {
         $query = Quote::with('venue');
 
-        if ($request->has('status')) {
+        if ($request->has('status') && $request->get('status') !== '') {
             $query->where('status', $request->get('status'));
         }
 
+        if ($request->has('venue_name') && $request->get('venue_name') !== '') {
+            $query->whereHas('venue', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->get('venue_name') . '%');
+            });
+        }
+
         return response()->json($query->latest()->paginate(20));
+    }
+
+    public function myQuotes(Request $request)
+    {
+        $userId = auth()->guard('api')->id();
+        $query = Quote::with('venue')->where('user_id', $userId);
+
+        if ($request->has('venue_name') && $request->get('venue_name') !== '') {
+            $query->whereHas('venue', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->get('venue_name') . '%');
+            });
+        }
+
+        $quotes = $query->latest()->get();
+        return response()->json($quotes);
     }
 
     public function store(Request $request)

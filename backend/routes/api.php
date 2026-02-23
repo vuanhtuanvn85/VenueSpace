@@ -41,6 +41,7 @@ Route::post('quotes', [QuoteController::class, 'store']);
 Route::group(['middleware' => 'auth:api'], function () {
     Route::get('favorites', [FavoriteController::class, 'index']);
     Route::post('favorites/toggle', [FavoriteController::class, 'toggle']);
+    Route::get('my-quotes', [QuoteController::class, 'myQuotes']);
 });
 
 /*
