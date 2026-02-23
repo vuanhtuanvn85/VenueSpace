@@ -56,4 +56,9 @@ class Venue extends Model
     {
         return $this->belongsToMany(User::class, 'favorites');
     }
+
+    public function spaces()
+    {
+        return $this->hasMany(Space::class);
+    }
 }

@@ -14,9 +14,10 @@ class VenueController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Venue::with('category')->where('is_active', true);
+        $query = Venue::with('category')->withCount('spaces')->where('is_active', true);
 
         // Search
+        // ... (existing search logic remains)
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
@@ -52,9 +53,23 @@ class VenueController extends Controller
                 ->whereBetween('longitude', [$request->get('minLng'), $request->get('maxLng')]);
         }
 
+        // Calculate total spaces count for the filtered results
+        $totalSpacesCount = \App\Models\Space::whereHas('venue', function ($q) use ($query) {
+            // Replicate the same constraints as $query but for the Space model
+            // This is slightly complex, alternatively we can just sum the spaces_count from the results
+        })->count();
+
+        // Simpler way: get the IDs of venues from the current query and sum spaces
+        $venueIds = (clone $query)->pluck('id');
+        $totalSpacesCount = \App\Models\Space::whereIn('venue_id', $venueIds)->count();
+
         $venues = $query->latest()->paginate($request->get('per_page', 9));
 
-        return response()->json($venues);
+        // Add total_spaces to the pagination response
+        $responseData = $venues->toArray();
+        $responseData['total_spaces'] = $totalSpacesCount;
+
+        return response()->json($responseData);
     }
 
     /**

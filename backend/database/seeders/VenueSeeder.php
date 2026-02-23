@@ -126,12 +126,23 @@ class VenueSeeder extends Seeder
 
         foreach ($venues as $venueData) {
             $venueData['amenities'] = ['Wifi', 'Audio Visual', 'Catering', 'Parking'];
-            Venue::create($venueData);
+            $venue = Venue::create($venueData);
+
+            // Create random spaces for each venue
+            $numSpaces = rand(1, 5);
+            for ($j = 1; $j <= $numSpaces; $j++) {
+                \App\Models\Space::create([
+                    'venue_id' => $venue->id,
+                    'name' => 'Space ' . $j . ' at ' . $venue->name,
+                    'capacity' => rand(10, $venue->capacity),
+                    'description' => 'A beautiful space within ' . $venue->name,
+                ]);
+            }
         }
 
         // Add more random venues for map clustering demo
         for ($i = 0; $i < 20; $i++) {
-            Venue::create([
+            $venue = Venue::create([
                 'category_id' => array_values($categories)[rand(0, count($categories) - 1)],
                 'name' => 'Venue ' . ($i + 7),
                 'description' => 'Random venue description.',
@@ -150,6 +161,16 @@ class VenueSeeder extends Seeder
                 'is_featured' => false,
                 'has_offer' => rand(0, 1) == 1,
             ]);
+
+            // Create random spaces
+            $numSpaces = rand(1, 5);
+            for ($j = 1; $j <= $numSpaces; $j++) {
+                \App\Models\Space::create([
+                    'venue_id' => $venue->id,
+                    'name' => 'Space ' . $j . ' at ' . $venue->name,
+                    'capacity' => rand(10, $venue->capacity),
+                ]);
+            }
         }
     }
 }
