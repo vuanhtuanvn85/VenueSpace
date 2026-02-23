@@ -17,7 +17,7 @@ class VenueController extends Controller
         $query = Venue::with('category')->where('is_active', true);
 
         // Search
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -26,23 +26,23 @@ class VenueController extends Controller
         }
 
         // Filters
-        if ($request->has('category_id')) {
+        if ($request->filled('category_id')) {
             $query->where('category_id', $request->get('category_id'));
         }
 
-        if ($request->has('city')) {
+        if ($request->filled('city')) {
             $query->where('city', $request->get('city'));
         }
 
-        if ($request->has('min_capacity')) {
+        if ($request->filled('min_capacity')) {
             $query->where('capacity', '>=', $request->get('min_capacity'));
         }
 
-        if ($request->has('price_level')) {
+        if ($request->filled('price_level')) {
             $query->where('price_level', $request->get('price_level'));
         }
 
-        if ($request->has('is_featured')) {
+        if ($request->filled('is_featured')) {
             $query->where('is_featured', true);
         }
 
