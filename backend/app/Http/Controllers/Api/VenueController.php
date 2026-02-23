@@ -74,13 +74,27 @@ class VenueController extends Controller
             'longitude' => 'required|numeric',
             'capacity' => 'required|integer',
             'price_level' => 'required|integer|between:1,5',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $venue = Venue::create($request->all());
+        $data = $request->except('images');
+
+        // Handle Image Uploads
+        $imageUrls = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                // Return relative path like "venues/xyz.jpg" to "storage/app/public/"
+                $path = $file->store('venues', 'public');
+                $imageUrls[] = url('storage/' . $path);
+            }
+        }
+        $data['images'] = empty($imageUrls) ? [] : $imageUrls;
+
+        $venue = Venue::create($data);
 
         return response()->json($venue, 201);
     }
@@ -96,13 +110,30 @@ class VenueController extends Controller
             'category_id' => 'exists:categories,id',
             'name' => 'string|max:255',
             'price_level' => 'integer|between:1,5',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $venue->update($request->all());
+        $data = $request->except('images');
+
+        // Handle Image Uploads
+        if ($request->hasFile('images')) {
+            $imageUrls = [];
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('venues', 'public');
+                $imageUrls[] = url('storage/' . $path);
+            }
+            // If there's an existing images array in DB, we could merge or overwrite. 
+            // We'll overwrite or append depending on logic. Usually replace is fine for simple usage.
+            // Let's merge with existing so we don't lose old ones on typical replace.
+            $existingImages = is_array($venue->images) ? $venue->images : [];
+            $data['images'] = array_merge($existingImages, $imageUrls);
+        }
+
+        $venue->update($data);
 
         return response()->json($venue);
     }
