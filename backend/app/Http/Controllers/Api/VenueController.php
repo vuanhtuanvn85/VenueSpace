@@ -46,6 +46,12 @@ class VenueController extends Controller
             $query->where('is_featured', true);
         }
 
+        // Map Bounds Filter
+        if ($request->filled(['minLat', 'maxLat', 'minLng', 'maxLng'])) {
+            $query->whereBetween('latitude', [$request->get('minLat'), $request->get('maxLat')])
+                ->whereBetween('longitude', [$request->get('minLng'), $request->get('maxLng')]);
+        }
+
         $venues = $query->latest()->paginate($request->get('per_page', 9));
 
         return response()->json($venues);
