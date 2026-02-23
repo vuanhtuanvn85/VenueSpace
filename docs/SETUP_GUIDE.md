@@ -60,12 +60,17 @@ docker exec venue-app composer install
 docker exec venue-app php artisan key:generate
 ```
 
-3. **Thiết lập JWT:**
+3. **Cấu hình liên kết Storage (cho việc upload ảnh):**
+```bash
+docker exec venue-app php artisan storage:link
+```
+
+4. **Thiết lập JWT:**
 ```bash
 docker exec venue-app php artisan jwt:secret
 ```
 
-4. **Migration & Seeding (Tạo bảng và dữ liệu mẫu):**
+5. **Migration & Seeding (Tạo bảng và dữ liệu mẫu):**
 ```bash
 docker exec venue-app php artisan migrate --seed
 ```

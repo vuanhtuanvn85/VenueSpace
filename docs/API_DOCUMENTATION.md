@@ -25,11 +25,11 @@ Authentication: Bearer Token (JWT)
 ### Danh sách Venues
 - **Endpoint:** `GET /venues`
 - **Query Params:** 
-  - `search`: Tìm theo tên/vị trí
+  - `search`: Tìm theo tên/vị trí tổng quát
   - `category_id`: Lọc theo loại
   - `city`: Lọc theo thành phố
-  - `min_capacity`: Lọc theo sức chứa
-  - `price_level`: Lọc theo giá (1-5)
+  - `min_capacity`: Lọc theo sức chứa tối thiểu
+  - `price_level`: Lọc theo mức giá (1-5)
   - `page`: Trang hiện tại
 - **Response:** Laravel Pagination Object
 
@@ -53,15 +53,23 @@ Authentication: Bearer Token (JWT)
 
 ---
 
+### Yêu cầu Báo giá của Tôi (User)
+- **Endpoint:** `GET /my-quotes`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Params:** `venue_name` (Lọc theo tên địa điểm)
+- **Response:** Mảng các Quote đã gửi của User hiện tại
+
+---
+
 ## 5. Admin Endpoints (Yêu cầu JWT + role Admin)
 
 ### Quản lý Venues
-- `POST /admin/venues` - Tạo mới
-- `PUT /admin/venues/{id}` - Cập nhật
+- `POST /admin/venues` - Tạo mới (Hỗ trợ `multipart/form-data` cho tham số `images[]` upload file)
+- `POST /admin/venues/{id}` - Cập nhật (Sử dụng `_method=PUT` đi kèm `multipart/form-data` để upload hình ảnh)
 - `DELETE /admin/venues/{id}` - Xóa
 
 ### Quản lý Quotes
-- `GET /admin/quotes` - Danh sách yêu cầu
+- `GET /admin/quotes` - Danh sách yêu cầu báo giá. Hỗ trợ query params: `venue_name`
 - `PUT /admin/quotes/{id}` - Cập nhật trạng thái (`pending`, `contacted`, `completed`, `cancelled`)
 
 ---
