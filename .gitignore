@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+node_modules/
+vendor/
+.next/
+dist/
+build/
+.DS_Store
+storage/*.key
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+auth.json
