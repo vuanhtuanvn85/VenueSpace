@@ -77,7 +77,7 @@ class VenueController extends Controller
      */
     public function show($id)
     {
-        $venue = Venue::with('category')->findOrFail($id);
+        $venue = Venue::with(['category', 'spaces'])->findOrFail($id);
         return response()->json($venue);
     }
 
@@ -96,19 +96,19 @@ class VenueController extends Controller
             'capacity' => 'required|integer',
             'price_level' => 'required|integer|between:1,5',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'spaces_data' => 'nullable|string', // JSON string of spaces
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $data = $request->except('images');
+        $data = $request->except(['images', 'spaces_data']);
 
         // Handle Image Uploads
         $imageUrls = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                // Return relative path like "venues/xyz.jpg" to "storage/app/public/"
                 $path = $file->store('venues', 'public');
                 $imageUrls[] = url('storage/' . $path);
             }
@@ -117,7 +117,21 @@ class VenueController extends Controller
 
         $venue = Venue::create($data);
 
-        return response()->json($venue, 201);
+        // Handle Spaces
+        if ($request->filled('spaces_data')) {
+            $spaces = json_decode($request->get('spaces_data'), true);
+            if (is_array($spaces)) {
+                foreach ($spaces as $spaceData) {
+                    $venue->spaces()->create([
+                        'name' => $spaceData['name'],
+                        'capacity' => $spaceData['capacity'],
+                        'description' => $spaceData['description'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json($venue->load('spaces'), 201);
     }
 
     /**
@@ -132,13 +146,14 @@ class VenueController extends Controller
             'name' => 'string|max:255',
             'price_level' => 'integer|between:1,5',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'spaces_data' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        $data = $request->except('images');
+        $data = $request->except(['images', 'spaces_data']);
 
         // Handle Image Uploads
         if ($request->hasFile('images')) {
@@ -147,16 +162,28 @@ class VenueController extends Controller
                 $path = $file->store('venues', 'public');
                 $imageUrls[] = url('storage/' . $path);
             }
-            // If there's an existing images array in DB, we could merge or overwrite. 
-            // We'll overwrite or append depending on logic. Usually replace is fine for simple usage.
-            // Let's merge with existing so we don't lose old ones on typical replace.
             $existingImages = is_array($venue->images) ? $venue->images : [];
             $data['images'] = array_merge($existingImages, $imageUrls);
         }
 
         $venue->update($data);
 
-        return response()->json($venue);
+        // Handle Spaces (Sync approach for simplicity: delete old, add new)
+        if ($request->filled('spaces_data')) {
+            $spaces = json_decode($request->get('spaces_data'), true);
+            if (is_array($spaces)) {
+                $venue->spaces()->delete();
+                foreach ($spaces as $spaceData) {
+                    $venue->spaces()->create([
+                        'name' => $spaceData['name'],
+                        'capacity' => $spaceData['capacity'],
+                        'description' => $spaceData['description'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json($venue->load('spaces'));
     }
 
     /**
